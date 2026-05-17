@@ -1,5 +1,5 @@
 #include <VapourSynth4.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "CPU.h"
 

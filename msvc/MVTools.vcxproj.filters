@@ -74,28 +74,19 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\MVFlowInter.c">
+    <ClCompile Include="..\src\MVFlowInter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVFlowFPS.c">
+    <ClCompile Include="..\src\MVFlowFPS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVFlowBlur.c">
+    <ClCompile Include="..\src\MVFlowBlur.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MVFlow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MVDegrains.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\MVBlockFPS.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\MVAnalysisData.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\MVAnalyse.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\CopyCode.cpp">
@@ -113,7 +104,7 @@
     <ClCompile Include="..\src\DCTFFTW.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\EntryPoint.c">
+    <ClCompile Include="..\src\EntryPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MVDepan.cpp">
@@ -140,56 +131,63 @@
     <ClCompile Include="..\src\Overlap_AVX2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVSCDetection.c">
+    <ClCompile Include="..\src\MVSCDetection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVSuper.c">
+    <ClCompile Include="..\src\MVSuper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVMask.c">
+    <ClCompile Include="..\src\MVMask.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVRecalculate.c">
+    <ClCompile Include="..\src\MVRecalculate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVFlowFPSHelper.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\MVFinest.c">
+    <ClCompile Include="..\src\MVFlowFPSHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\MVDegrains_AVX2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MVCompensate.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\GroupOfPlanes.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Luma.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Fakery.c">
+    <ClCompile Include="..\src\Fakery.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CPU.c">
+    <ClCompile Include="..\src\CPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\src\asm\pixel-a.asm">
-      <Filter>Source Files\x86</Filter>
-    </None>
-    <None Include="..\src\asm\sad-a.asm">
-      <Filter>Source Files\x86</Filter>
-    </None>
+    <ClCompile Include="..\src\GroupOfPlanes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MVAnalyse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MVAnalysisData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MVBlockFPS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MVCompensate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MVFinest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="..\src\asm\const-a.asm">
       <Filter>Source Files\x86</Filter>
     </NASM>
     <NASM Include="..\src\asm\cpu-a.asm">
+      <Filter>Source Files\x86</Filter>
+    </NASM>
+    <NASM Include="..\src\asm\sad-a.asm">
+      <Filter>Source Files\x86</Filter>
+    </NASM>
+    <NASM Include="..\src\asm\pixel-a.asm">
       <Filter>Source Files\x86</Filter>
     </NASM>
   </ItemGroup>

@@ -72,7 +72,7 @@ static const VSFrame *VS_CC mvfinestGetFrame(int n, int activationReason, void *
 
         if (d->nPel == 1) { // simply copy top lines
             for (int i = 0; i < d->vi.format.numPlanes; i++)
-                vsh_bitblt(pDst[i], nDstPitches[i], pRef[i], nRefPitches[i], d->vi.width * bytesPerSample, d->vi.height);
+                vsh::bitblt(pDst[i], nDstPitches[i], pRef[i], nRefPitches[i], d->vi.width * bytesPerSample, d->vi.height);
         } else {
             MVGroupOfFrames pRefGOF = { 0 };
             mvgofInit(&pRefGOF, d->nSuperLevels, d->nWidth, d->nHeight, d->nSuperPel, d->nSuperHPad, d->nSuperVPad, d->nSuperModeYUV, d->opt, d->xRatioUV, d->yRatioUV, bitsPerSample);
@@ -155,7 +155,7 @@ static void VS_CC mvfinestCreate(const VSMap *in, VSMap *out, void *userData, VS
     d.super = vsapi->mapGetNode(in, "super", 0, 0);
     d.vi = *vsapi->getVideoInfo(d.super);
 
-    if (!vsh_isConstantVideoFormat(&d.vi) || d.vi.format.bitsPerSample > 16 || d.vi.format.sampleType != stInteger || d.vi.format.subSamplingW > 1 || d.vi.format.subSamplingH > 1 || (d.vi.format.colorFamily != cfYUV && d.vi.format.colorFamily != cfGray)) {
+    if (!vsh::isConstantVideoFormat(&d.vi) || d.vi.format.bitsPerSample > 16 || d.vi.format.sampleType != stInteger || d.vi.format.subSamplingW > 1 || d.vi.format.subSamplingH > 1 || (d.vi.format.colorFamily != cfYUV && d.vi.format.colorFamily != cfGray)) {
         vsapi->mapSetError(out, "Finest: input clip must be GRAY, 420, 422, 440, or 444, up to 16 bits, with constant dimensions.");
         vsapi->freeNode(d.super);
         return;

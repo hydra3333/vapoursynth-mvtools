@@ -1,7 +1,7 @@
-#include <limits.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include <VapourSynth4.h>
 #include <VSHelper4.h>

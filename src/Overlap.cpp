@@ -19,22 +19,14 @@
 #include <cmath>
 #include <cstdlib>
 #include <stdexcept>
+#include <algorithm>
 #include <unordered_map>
 
-#include <VSHelper4.h>
 #include "CPU.h"
 #include "Overlap.h"
 
 #ifndef M_PI
 #define M_PI       3.14159265358979323846f
-#endif
-
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef max
-#define max(a, b) (((a) < (b)) ? (b) : (a))
 #endif
 
 
@@ -331,27 +323,3 @@ OverlapsFunction selectOverlapsFunction(unsigned width, unsigned height, unsigne
 #undef OVERS
 #undef OVERS_SSE2
 #undef KEY
-
-
-#define ToPixels(PixelType2, PixelType) \
-void ToPixels_##PixelType2##_##PixelType(uint8_t * VS_RESTRICT pDst8, ptrdiff_t nDstPitch, const uint8_t * VS_RESTRICT pSrc8, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int bitsPerSample) { \
-    int pixelMax = (1 << bitsPerSample) - 1; \
- \
-    for (int h = 0; h < nHeight; h++) { \
-        for (int i = 0; i < nWidth; i++) { \
-            const PixelType2 *pSrc = (const PixelType2 *)pSrc8; \
-            PixelType *pDst = (PixelType *)pDst8; \
- \
-            int a = (pSrc[i] + 16) >> 5; \
-            if (sizeof(PixelType) == 1) \
-                pDst[i] = a | ((255 - a) >> (sizeof(int) * 8 - 1)); \
-            else \
-                pDst[i] = min(pixelMax, a); \
-        } \
-        pDst8 += nDstPitch; \
-        pSrc8 += nSrcPitch; \
-    } \
-}
-
-ToPixels(uint16_t, uint8_t)
-ToPixels(uint32_t, uint16_t)

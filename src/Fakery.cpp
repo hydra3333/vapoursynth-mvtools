@@ -1,6 +1,6 @@
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "CommonFunctions.h"
 #include "Fakery.h"

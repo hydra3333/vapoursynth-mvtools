@@ -17,10 +17,10 @@
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA, or visit
 // http://www.gnu.org/copyleft/gpl.html .
 
-#include <limits.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include <VapourSynth4.h>
 #include <VSHelper4.h>
@@ -67,75 +67,71 @@ typedef struct MVFlowBlurData {
     SimpleResize upsizerUV;
 } MVFlowBlurData;
 
+template<typename PixelType>
+static void RealFlowBlur(uint8_t * VS_RESTRICT pdst8, ptrdiff_t dst_pitch, const uint8_t * VS_RESTRICT pref8, ptrdiff_t ref_pitch,
+                         const int16_t *VXFullB, const int16_t *VXFullF, const int16_t *VYFullB, const int16_t *VYFullF,
+                         int VPitch, int width, int height, int blur256, int prec, int nPel) {
+    const PixelType *pref = (const PixelType *)pref8;
+    PixelType *pdst = (PixelType *)pdst8;
 
-#define RealFlowBlur(PixelType) \
-static void RealFlowBlur_##PixelType(uint8_t * VS_RESTRICT pdst8, ptrdiff_t dst_pitch, const uint8_t * VS_RESTRICT pref8, ptrdiff_t ref_pitch, \
-                         const int16_t *VXFullB, const int16_t *VXFullF, const int16_t *VYFullB, const int16_t *VYFullF, \
-                         int VPitch, int width, int height, int blur256, int prec, int nPel) { \
-    const PixelType *pref = (const PixelType *)pref8; \
-    PixelType *pdst = (PixelType *)pdst8; \
- \
-    ref_pitch /= sizeof(PixelType); \
-    dst_pitch /= sizeof(PixelType); \
- \
-    int nPelLog = ilog2(nPel); \
- \
-    /* very slow, but precise motion blur */ \
-    for (int h = 0; h < height; h++) { \
-        for (int w = 0; w < width; w++) { \
-            int bluredsum = pref[w << nPelLog]; \
-            int vxF0 = VXFullF[w] * blur256; \
-            int vyF0 = VYFullF[w] * blur256; \
-            int mF = (VSMAX(abs(vxF0), abs(vyF0)) / prec) >> 8; \
-            if (mF > 0) { \
-                vxF0 /= mF; \
-                vyF0 /= mF; \
-                int vxF = vxF0; \
-                int vyF = vyF0; \
-                for (int i = 0; i < mF; i++) { \
-                    int dstF = pref[(vyF >> 8) * ref_pitch + (vxF >> 8) + (w << nPelLog)]; \
-                    bluredsum += dstF; \
-                    vxF += vxF0; \
-                    vyF += vyF0; \
-                } \
-            } \
-            int vxB0 = VXFullB[w] * blur256; \
-            int vyB0 = VYFullB[w] * blur256; \
-            int mB = (VSMAX(abs(vxB0), abs(vyB0)) / prec) >> 8; \
-            if (mB > 0) { \
-                vxB0 /= mB; \
-                vyB0 /= mB; \
-                int vxB = vxB0; \
-                int vyB = vyB0; \
-                for (int i = 0; i < mB; i++) { \
-                    int dstB = pref[(vyB >> 8) * ref_pitch + (vxB >> 8) + (w << nPelLog)]; \
-                    bluredsum += dstB; \
-                    vxB += vxB0; \
-                    vyB += vyB0; \
-                } \
-            } \
-            pdst[w] = bluredsum / (mF + mB + 1); \
-        } \
-        pdst += dst_pitch; \
-        pref += (ref_pitch << nPelLog); \
-        VXFullB += VPitch; \
-        VYFullB += VPitch; \
-        VXFullF += VPitch; \
-        VYFullF += VPitch; \
-    } \
+    ref_pitch /= sizeof(PixelType);
+    dst_pitch /= sizeof(PixelType);
+
+    int nPelLog = ilog2(nPel);
+
+    /* very slow, but precise motion blur */
+    for (int h = 0; h < height; h++) {
+        for (int w = 0; w < width; w++) {
+            int bluredsum = pref[w << nPelLog];
+            int vxF0 = VXFullF[w] * blur256;
+            int vyF0 = VYFullF[w] * blur256;
+            int mF = (VSMAX(abs(vxF0), abs(vyF0)) / prec) >> 8;
+            if (mF > 0) {
+                vxF0 /= mF;
+                vyF0 /= mF;
+                int vxF = vxF0;
+                int vyF = vyF0;
+                for (int i = 0; i < mF; i++) {
+                    int dstF = pref[(vyF >> 8) * ref_pitch + (vxF >> 8) + (w << nPelLog)];
+                    bluredsum += dstF;
+                    vxF += vxF0;
+                    vyF += vyF0;
+                }
+            }
+            int vxB0 = VXFullB[w] * blur256;
+            int vyB0 = VYFullB[w] * blur256;
+            int mB = (VSMAX(abs(vxB0), abs(vyB0)) / prec) >> 8;
+            if (mB > 0) {
+                vxB0 /= mB;
+                vyB0 /= mB;
+                int vxB = vxB0;
+                int vyB = vyB0;
+                for (int i = 0; i < mB; i++) {
+                    int dstB = pref[(vyB >> 8) * ref_pitch + (vxB >> 8) + (w << nPelLog)];
+                    bluredsum += dstB;
+                    vxB += vxB0;
+                    vyB += vyB0;
+                }
+            }
+            pdst[w] = bluredsum / (mF + mB + 1);
+        }
+        pdst += dst_pitch;
+        pref += (ref_pitch << nPelLog);
+        VXFullB += VPitch;
+        VYFullB += VPitch;
+        VXFullF += VPitch;
+        VYFullF += VPitch;
+    }
 }
-
-RealFlowBlur(uint8_t)
-RealFlowBlur(uint16_t)
 
 
 static void FlowBlur(uint8_t *pdst, ptrdiff_t dst_pitch, const uint8_t *pref, ptrdiff_t ref_pitch,
                      const int16_t *VXFullB, const int16_t *VXFullF, const int16_t *VYFullB, const int16_t *VYFullF,
                      int VPitch, int width, int height, int blur256, int prec, int nPel, int bitsPerSample) {
     if (bitsPerSample == 8)
-        RealFlowBlur_uint8_t(pdst, dst_pitch, pref, ref_pitch, VXFullB, VXFullF, VYFullB, VYFullF, VPitch, width, height, blur256, prec, nPel);
+        RealFlowBlur<uint8_t>(pdst, dst_pitch, pref, ref_pitch, VXFullB, VXFullF, VYFullB, VYFullF, VPitch, width, height, blur256, prec, nPel);
     else
-        RealFlowBlur_uint16_t(pdst, dst_pitch, pref, ref_pitch, VXFullB, VXFullF, VYFullB, VYFullF, VPitch, width, height, blur256, prec, nPel);
+        RealFlowBlur<uint16_t>(pdst, dst_pitch, pref, ref_pitch, VXFullB, VXFullF, VYFullB, VYFullF, VPitch, width, height, blur256, prec, nPel);
 }
 
 
@@ -510,7 +506,7 @@ static void VS_CC mvflowblurCreate(const VSMap *in, VSMap *out, void *userData, 
         return;
     }
 
-    if (!vsh_isConstantVideoFormat(d.vi) || d.vi->format.bitsPerSample > 16 || d.vi->format.sampleType != stInteger || d.vi->format.subSamplingW > 1 || d.vi->format.subSamplingH > 1 || (d.vi->format.colorFamily != cfYUV && d.vi->format.colorFamily != cfGray)) {
+    if (!vsh::isConstantVideoFormat(d.vi) || d.vi->format.bitsPerSample > 16 || d.vi->format.sampleType != stInteger || d.vi->format.subSamplingW > 1 || d.vi->format.subSamplingH > 1 || (d.vi->format.colorFamily != cfYUV && d.vi->format.colorFamily != cfGray)) {
         vsapi->mapSetError(out, "FlowBlur: input clip must be GRAY, 420, 422, 440, or 444, up to 16 bits, with constant dimensions.");
         vsapi->freeNode(d.super);
         vsapi->freeNode(d.finest);

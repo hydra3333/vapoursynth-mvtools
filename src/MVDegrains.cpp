@@ -488,7 +488,7 @@ static void selectFunctions(MVDegrainData *d) {
     if (d->vi->format.bitsPerSample == 8) {
         d->LimitChanges = LimitChanges_C<uint8_t>;
 
-        d->ToPixels = ToPixels_uint16_t_uint8_t;
+        d->ToPixels = ToPixels<uint16_t, uint8_t>;
 
 #if defined(MVTOOLS_X86) || defined(MVTOOLS_ARM)
         if (d->opt) {
@@ -498,7 +498,7 @@ static void selectFunctions(MVDegrainData *d) {
     } else {
         d->LimitChanges = LimitChanges_C<uint16_t>;
 
-        d->ToPixels = ToPixels_uint32_t_uint16_t;
+        d->ToPixels = ToPixels<uint32_t, uint16_t>;
     }
 
     d->OVERS[0] = selectOverlapsFunction(nBlkSizeX, nBlkSizeY, bits, d->opt);
@@ -810,7 +810,7 @@ static void VS_CC mvdegrainCreate(const VSMap *in, VSMap *out, void *userData, V
 }
 
 
-extern "C" void mvdegrainsRegister(VSPlugin *plugin, const VSPLUGINAPI *vspapi) {
+void mvdegrainsRegister(VSPlugin *plugin, const VSPLUGINAPI *vspapi) {
     vspapi->registerFunction("Degrain1",
                  "clip:vnode;"
                  "super:vnode;"

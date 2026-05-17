@@ -17,10 +17,10 @@
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA, or visit
 // http://www.gnu.org/copyleft/gpl.html .
 
-#include <limits.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <climits>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include <VapourSynth4.h>
 #include <VSHelper4.h>
@@ -99,141 +99,133 @@ static void MultMasks(uint8_t *smallmaskF, uint8_t *smallmaskB, uint8_t *smallma
     }
 }
 
-
-#define MEDIAN(PixelType) \
-static inline PixelType MEDIAN_##PixelType(PixelType a, PixelType b, PixelType c) { \
-    PixelType mn = VSMIN(a, b); \
-    PixelType mx = VSMAX(a, b); \
-    PixelType m = VSMIN(mx, c); \
-    m = VSMAX(mn, m); \
-    return m; \
+template<typename PixelType>        
+static inline PixelType MEDIAN(PixelType a, PixelType b, PixelType c) {
+    PixelType mn = std::min(a, b);
+    PixelType mx = std::max(a, b);
+    PixelType m = std::min(mx, c);
+    m = std::max(mn, m);
+    return m;
 }
 
-MEDIAN(uint8_t)
-MEDIAN(uint16_t)
+template<typename PixelType>
+static void RealResultBlock(uint8_t * VS_RESTRICT pDst, ptrdiff_t dst_pitch, const uint8_t * pMCB, ptrdiff_t MCB_pitch, const uint8_t *pMCF, ptrdiff_t MCF_pitch,
+                            const uint8_t *pRef, ptrdiff_t ref_pitch, const uint8_t *pSrc, ptrdiff_t src_pitch, const uint8_t *maskB, ptrdiff_t mask_pitch, const uint8_t *maskF,
+                            const uint8_t *pOcc, int nBlkSizeX, int nBlkSizeY, int time256, int mode, int bitsPerSample) {
+    if (mode == 0) {
+        for (int h = 0; h < nBlkSizeY; h++) {
+            for (int w = 0; w < nBlkSizeX; w++) {
+                const PixelType *pMCB_ = (const PixelType *)pMCB;
+                const PixelType *pMCF_ = (const PixelType *)pMCF;
+                PixelType *pDst_ = (PixelType *)pDst;
+ 
+                int mca = (pMCB_[w] * time256 + pMCF_[w] * (256 - time256)) >> 8; /* MC fetched average */
+                pDst_[w] = mca;
+            }
+            pDst += dst_pitch;
+            pMCB += MCB_pitch;
+            pMCF += MCF_pitch;
+        }
+    } else if (mode == 1) {
+        for (int h = 0; h < nBlkSizeY; h++) {
+            for (int w = 0; w < nBlkSizeX; w++) {
+                const PixelType *pMCB_ = (const PixelType *)pMCB;
+                const PixelType *pMCF_ = (const PixelType *)pMCF;
+                const PixelType *pRef_ = (const PixelType *)pRef;
+                const PixelType *pSrc_ = (const PixelType *)pSrc;
+                PixelType *pDst_ = (PixelType *)pDst;
 
+                int mca = (pMCB_[w] * time256 + pMCF_[w] * (256 - time256)) >> 8; /* MC fetched average */
+                int sta = MEDIAN<PixelType>(pRef_[w], pSrc_[w], mca);             /* static median */
+                pDst_[w] = sta;
+            }
+            pDst += dst_pitch;
+            pMCB += MCB_pitch;
+            pMCF += MCF_pitch;
+            pRef += ref_pitch;
+            pSrc += src_pitch;
+        }
+    } else if (mode == 2) {
+        for (int h = 0; h < nBlkSizeY; h++) {
+            for (int w = 0; w < nBlkSizeX; w++) {
+                const PixelType *pMCB_ = (const PixelType *)pMCB;
+                const PixelType *pMCF_ = (const PixelType *)pMCF;
+                const PixelType *pRef_ = (const PixelType *)pRef;
+                const PixelType *pSrc_ = (const PixelType *)pSrc;
+                PixelType *pDst_ = (PixelType *)pDst;
 
-#define RealResultBlock(PixelType) \
-static void RealResultBlock_##PixelType(uint8_t * VS_RESTRICT pDst, ptrdiff_t dst_pitch, const uint8_t * pMCB, ptrdiff_t MCB_pitch, const uint8_t *pMCF, ptrdiff_t MCF_pitch, \
-                            const uint8_t *pRef, ptrdiff_t ref_pitch, const uint8_t *pSrc, ptrdiff_t src_pitch, const uint8_t *maskB, ptrdiff_t mask_pitch, const uint8_t *maskF, \
-                            const uint8_t *pOcc, int nBlkSizeX, int nBlkSizeY, int time256, int mode, int bitsPerSample) { \
-    if (mode == 0) { \
-        for (int h = 0; h < nBlkSizeY; h++) { \
-            for (int w = 0; w < nBlkSizeX; w++) { \
-                const PixelType *pMCB_ = (const PixelType *)pMCB; \
-                const PixelType *pMCF_ = (const PixelType *)pMCF; \
-                PixelType *pDst_ = (PixelType *)pDst; \
- \
-                int mca = (pMCB_[w] * time256 + pMCF_[w] * (256 - time256)) >> 8; /* MC fetched average */ \
-                pDst_[w] = mca; \
-            } \
-            pDst += dst_pitch; \
-            pMCB += MCB_pitch; \
-            pMCF += MCF_pitch; \
-        } \
-    } else if (mode == 1) { \
-        for (int h = 0; h < nBlkSizeY; h++) { \
-            for (int w = 0; w < nBlkSizeX; w++) { \
-                const PixelType *pMCB_ = (const PixelType *)pMCB; \
-                const PixelType *pMCF_ = (const PixelType *)pMCF; \
-                const PixelType *pRef_ = (const PixelType *)pRef; \
-                const PixelType *pSrc_ = (const PixelType *)pSrc; \
-                PixelType *pDst_ = (PixelType *)pDst; \
- \
-                int mca = (pMCB_[w] * time256 + pMCF_[w] * (256 - time256)) >> 8; /* MC fetched average */ \
-                int sta = MEDIAN_##PixelType(pRef_[w], pSrc_[w], mca);             /* static median */ \
-                pDst_[w] = sta; \
-            } \
-            pDst += dst_pitch; \
-            pMCB += MCB_pitch; \
-            pMCF += MCF_pitch; \
-            pRef += ref_pitch; \
-            pSrc += src_pitch; \
-        } \
-    } else if (mode == 2) { \
-        for (int h = 0; h < nBlkSizeY; h++) { \
-            for (int w = 0; w < nBlkSizeX; w++) { \
-                const PixelType *pMCB_ = (const PixelType *)pMCB; \
-                const PixelType *pMCF_ = (const PixelType *)pMCF; \
-                const PixelType *pRef_ = (const PixelType *)pRef; \
-                const PixelType *pSrc_ = (const PixelType *)pSrc; \
-                PixelType *pDst_ = (PixelType *)pDst; \
- \
-                int avg = (pRef_[w] * time256 + pSrc_[w] * (256 - time256)) >> 8; /* simple temporal non-MC average */ \
-                int dyn = MEDIAN_##PixelType(avg, pMCB_[w], pMCF_[w]);             /* dynamic median */ \
-                pDst_[w] = dyn; \
-            } \
-            pDst += dst_pitch; \
-            pMCB += MCB_pitch; \
-            pMCF += MCF_pitch; \
-            pRef += ref_pitch; \
-            pSrc += src_pitch; \
-        } \
-    } else if (mode == 3 || mode == 6) { \
-        for (int h = 0; h < nBlkSizeY; h++) { \
-            for (int w = 0; w < nBlkSizeX; w++) { \
-                const PixelType *pMCB_ = (const PixelType *)pMCB; \
-                const PixelType *pMCF_ = (const PixelType *)pMCF; \
-                PixelType *pDst_ = (PixelType *)pDst; \
- \
-                pDst_[w] = (((maskB[w] * pMCF_[w] + (255 - maskB[w]) * pMCB_[w] + 255) >> 8) * time256 + \
-                            ((maskF[w] * pMCB_[w] + (255 - maskF[w]) * pMCF_[w] + 255) >> 8) * (256 - time256)) >> \
-                           8; \
-            } \
-            pDst += dst_pitch; \
-            pMCB += MCB_pitch; \
-            pMCF += MCF_pitch; \
-            maskB += mask_pitch; \
-            maskF += mask_pitch; \
-        } \
-    } else if (mode == 4 || mode == 7) { \
-        for (int h = 0; h < nBlkSizeY; h++) { \
-            for (int w = 0; w < nBlkSizeX; w++) { \
-                const PixelType *pMCB_ = (const PixelType *)pMCB; \
-                const PixelType *pMCF_ = (const PixelType *)pMCF; \
-                const PixelType *pRef_ = (const PixelType *)pRef; \
-                const PixelType *pSrc_ = (const PixelType *)pSrc; \
-                PixelType *pDst_ = (PixelType *)pDst; \
- \
-                int f = (maskF[w] * pMCB_[w] + (255 - maskF[w]) * pMCF_[w] + 255) >> 8; \
-                int b = (maskB[w] * pMCF_[w] + (255 - maskB[w]) * pMCB_[w] + 255) >> 8; \
-                int avg = (pRef_[w] * time256 + pSrc_[w] * (256 - time256) + 255) >> 8; /* simple temporal non-MC average */ \
-                int m = (b * time256 + f * (256 - time256)) >> 8; \
-                pDst_[w] = (avg * pOcc[w] + m * (255 - pOcc[w]) + 255) >> 8; \
-            } \
-            pDst += dst_pitch; \
-            pMCB += MCB_pitch; \
-            pMCF += MCF_pitch; \
-            pRef += ref_pitch; \
-            pSrc += src_pitch; \
-            maskB += mask_pitch; \
-            maskF += mask_pitch; \
-            pOcc += mask_pitch; \
-        } \
-    } else if (mode == 5 || mode == 8) { \
-        for (int h = 0; h < nBlkSizeY; h++) { \
-            for (int w = 0; w < nBlkSizeX; w++) { \
-                PixelType *pDst_ = (PixelType *)pDst; \
- \
-                pDst_[w] = pOcc[w] << (bitsPerSample - 8); \
-            } \
-            pDst += dst_pitch; \
-            pOcc += mask_pitch; \
-        } \
-    } \
+                int avg = (pRef_[w] * time256 + pSrc_[w] * (256 - time256)) >> 8; /* simple temporal non-MC average */
+                int dyn = MEDIAN<PixelType>(avg, pMCB_[w], pMCF_[w]);             /* dynamic median */
+                pDst_[w] = dyn;
+            }
+            pDst += dst_pitch;
+            pMCB += MCB_pitch;
+            pMCF += MCF_pitch;
+            pRef += ref_pitch;
+            pSrc += src_pitch;
+        }
+    } else if (mode == 3 || mode == 6) {
+        for (int h = 0; h < nBlkSizeY; h++) {
+            for (int w = 0; w < nBlkSizeX; w++) {
+                const PixelType *pMCB_ = (const PixelType *)pMCB;
+                const PixelType *pMCF_ = (const PixelType *)pMCF;
+                PixelType *pDst_ = (PixelType *)pDst;
+
+                pDst_[w] = (((maskB[w] * pMCF_[w] + (255 - maskB[w]) * pMCB_[w] + 255) >> 8) * time256 +
+                            ((maskF[w] * pMCB_[w] + (255 - maskF[w]) * pMCF_[w] + 255) >> 8) * (256 - time256)) >>
+                           8;
+            }
+            pDst += dst_pitch;
+            pMCB += MCB_pitch;
+            pMCF += MCF_pitch;
+            maskB += mask_pitch;
+            maskF += mask_pitch;
+        }
+    } else if (mode == 4 || mode == 7) {
+        for (int h = 0; h < nBlkSizeY; h++) {
+            for (int w = 0; w < nBlkSizeX; w++) {
+                const PixelType *pMCB_ = (const PixelType *)pMCB;
+                const PixelType *pMCF_ = (const PixelType *)pMCF;
+                const PixelType *pRef_ = (const PixelType *)pRef;
+                const PixelType *pSrc_ = (const PixelType *)pSrc;
+                PixelType *pDst_ = (PixelType *)pDst;
+
+                int f = (maskF[w] * pMCB_[w] + (255 - maskF[w]) * pMCF_[w] + 255) >> 8;
+                int b = (maskB[w] * pMCF_[w] + (255 - maskB[w]) * pMCB_[w] + 255) >> 8;
+                int avg = (pRef_[w] * time256 + pSrc_[w] * (256 - time256) + 255) >> 8; /* simple temporal non-MC average */
+                int m = (b * time256 + f * (256 - time256)) >> 8;
+                pDst_[w] = (avg * pOcc[w] + m * (255 - pOcc[w]) + 255) >> 8;
+            }
+            pDst += dst_pitch;
+            pMCB += MCB_pitch;
+            pMCF += MCF_pitch;
+            pRef += ref_pitch;
+            pSrc += src_pitch;
+            maskB += mask_pitch;
+            maskF += mask_pitch;
+            pOcc += mask_pitch;
+        }
+    } else if (mode == 5 || mode == 8) {
+        for (int h = 0; h < nBlkSizeY; h++) {
+            for (int w = 0; w < nBlkSizeX; w++) {
+                PixelType *pDst_ = (PixelType *)pDst;
+
+                pDst_[w] = pOcc[w] << (bitsPerSample - 8);
+            }
+            pDst += dst_pitch;
+            pOcc += mask_pitch;
+        }
+    }
 }
-
-RealResultBlock(uint8_t)
-RealResultBlock(uint16_t)
 
 
 static void ResultBlock(uint8_t *pDst, ptrdiff_t dst_pitch, const uint8_t *pMCB, ptrdiff_t MCB_pitch, const uint8_t *pMCF, ptrdiff_t MCF_pitch,
                         const uint8_t *pRef, ptrdiff_t ref_pitch, const uint8_t *pSrc, ptrdiff_t src_pitch, const uint8_t *maskB, ptrdiff_t mask_pitch, const uint8_t *maskF,
                         const uint8_t *pOcc, int nBlkSizeX, int nBlkSizeY, int time256, int mode, int bitsPerSample) {
     if (bitsPerSample == 8)
-        RealResultBlock_uint8_t(pDst, dst_pitch, pMCB, MCB_pitch, pMCF, MCF_pitch, pRef, ref_pitch, pSrc, src_pitch, maskB, mask_pitch, maskF, pOcc, nBlkSizeX, nBlkSizeY, time256, mode, bitsPerSample);
+        RealResultBlock<uint8_t>(pDst, dst_pitch, pMCB, MCB_pitch, pMCF, MCF_pitch, pRef, ref_pitch, pSrc, src_pitch, maskB, mask_pitch, maskF, pOcc, nBlkSizeX, nBlkSizeY, time256, mode, bitsPerSample);
     else
-        RealResultBlock_uint16_t(pDst, dst_pitch, pMCB, MCB_pitch, pMCF, MCF_pitch, pRef, ref_pitch, pSrc, src_pitch, maskB, mask_pitch, maskF, pOcc, nBlkSizeX, nBlkSizeY, time256, mode, bitsPerSample);
+        RealResultBlock<uint16_t>(pDst, dst_pitch, pMCB, MCB_pitch, pMCF, MCF_pitch, pRef, ref_pitch, pSrc, src_pitch, maskB, mask_pitch, maskF, pOcc, nBlkSizeX, nBlkSizeY, time256, mode, bitsPerSample);
 }
 
 
@@ -725,9 +717,9 @@ static void selectFunctions(MVBlockFPSData *d) {
     const unsigned bits = d->vi.format.bytesPerSample * 8;
 
     if (d->vi.format.bitsPerSample == 8) {
-        d->ToPixels = ToPixels_uint16_t_uint8_t;
+        d->ToPixels = ToPixels<uint16_t, uint8_t>;
     } else {
-        d->ToPixels = ToPixels_uint32_t_uint16_t;
+        d->ToPixels = ToPixels<uint32_t, uint16_t>;
     }
 
     d->OVERS[0] = selectOverlapsFunction(nBlkSizeX, nBlkSizeY, bits, d->opt);
@@ -924,7 +916,7 @@ static void VS_CC mvblockfpsCreate(const VSMap *in, VSMap *out, void *userData, 
         return;
     }
 
-    if (!vsh_isConstantVideoFormat(&d.vi) || d.vi.format.bitsPerSample > 16 || d.vi.format.sampleType != stInteger || d.vi.format.subSamplingW > 1 || d.vi.format.subSamplingH > 1 || (d.vi.format.colorFamily != cfYUV && d.vi.format.colorFamily != cfGray)) {
+    if (!vsh::isConstantVideoFormat(&d.vi) || d.vi.format.bitsPerSample > 16 || d.vi.format.sampleType != stInteger || d.vi.format.subSamplingW > 1 || d.vi.format.subSamplingH > 1 || (d.vi.format.colorFamily != cfYUV && d.vi.format.colorFamily != cfGray)) {
         vsapi->mapSetError(out, "BlockFPS: input clip must be GRAY, 420, 422, 440, or 444, up to 16 bits, with constant dimensions.");
         vsapi->freeNode(d.super);
         vsapi->freeNode(d.mvfw);

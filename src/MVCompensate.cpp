@@ -329,13 +329,13 @@ static const VSFrame *VS_CC mvcompensateGetFrame(int n, int activationReason, vo
 
             for (int plane = 0; plane < num_planes; plane++) {
                 if (nWidth_B[0] < nWidth[0]) { // padding of right non-covered region
-                    vsh_bitblt(pDst[plane] + nWidth_B[plane] * bytesPerSample, nDstPitches[plane],
+                    vsh::bitblt(pDst[plane] + nWidth_B[plane] * bytesPerSample, nDstPitches[plane],
                               scSrc[plane] + (nWidth_B[plane] + nHPadding[plane]) * bytesPerSample + nVPadding[plane] * scPitches[plane], scPitches[plane],
                               (nWidth[plane] - nWidth_B[plane]) * bytesPerSample, nHeight_B[plane]);
                 }
 
                 if (nHeight_B[0] < nHeight[0]) { // padding of bottom non-covered region
-                    vsh_bitblt(pDst[plane] + nHeight_B[plane] * nDstPitches[plane], nDstPitches[plane],
+                    vsh::bitblt(pDst[plane] + nHeight_B[plane] * nDstPitches[plane], nDstPitches[plane],
                               scSrc[plane] + nHPadding[plane] * bytesPerSample + (nHeight_B[plane] + nVPadding[plane]) * scPitches[plane], scPitches[plane],
                               nWidth[plane] * bytesPerSample, nHeight[plane] - nHeight_B[plane]);
                 }
@@ -359,7 +359,7 @@ static const VSFrame *VS_CC mvcompensateGetFrame(int n, int activationReason, vo
 
                 ptrdiff_t nOffset = nHPadding[plane] * bytesPerSample + nVPadding[plane] * nSrcPitches[plane];
 
-                vsh_bitblt(pDst[plane], nDstPitches[plane], pSrc[plane] + nOffset, nSrcPitches[plane], nWidth[plane] * bytesPerSample, nHeight[plane]);
+                vsh::bitblt(pDst[plane], nDstPitches[plane], pSrc[plane] + nOffset, nSrcPitches[plane], nWidth[plane] * bytesPerSample, nHeight[plane]);
             }
         }
 
@@ -403,9 +403,9 @@ static void selectFunctions(MVCompensateData *d) {
     const unsigned bits = d->vi->format.bytesPerSample * 8;
 
     if (d->vi->format.bitsPerSample == 8) {
-        d->ToPixels = ToPixels_uint16_t_uint8_t;
+        d->ToPixels = ToPixels<uint16_t, uint8_t>;
     } else {
-        d->ToPixels = ToPixels_uint32_t_uint16_t;
+        d->ToPixels = ToPixels<uint32_t, uint16_t>;
     }
 
     d->OVERS[0] = selectOverlapsFunction(nBlkSizeX, nBlkSizeY, bits, d->opt);
@@ -540,7 +540,7 @@ static void VS_CC mvcompensateCreate(const VSMap *in, VSMap *out, void *userData
         return;
     }
 
-    if (!vsh_isConstantVideoFormat(d.vi) || d.vi->format.bitsPerSample > 16 || d.vi->format.sampleType != stInteger || d.vi->format.subSamplingW > 1 || d.vi->format.subSamplingH > 1 || (d.vi->format.colorFamily != cfYUV && d.vi->format.colorFamily != cfGray)) {
+    if (!vsh::isConstantVideoFormat(d.vi) || d.vi->format.bitsPerSample > 16 || d.vi->format.sampleType != stInteger || d.vi->format.subSamplingW > 1 || d.vi->format.subSamplingH > 1 || (d.vi->format.colorFamily != cfYUV && d.vi->format.colorFamily != cfGray)) {
         vsapi->mapSetError(out, "Compensate: input clip must be GRAY, 420, 422, 440, or 444, up to 16 bits, with constant dimensions.");
         vsapi->freeNode(d.super);
         vsapi->freeNode(d.vectors);
