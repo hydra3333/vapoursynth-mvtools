@@ -118,9 +118,9 @@ static const VSFrame *VS_CC mvdegrainGetFrame(int n, int activationReason, void 
         const uint8_t *pSrcCur[3] = { NULL };
         const uint8_t *pSrc[3] = { NULL };
         const uint8_t *pRefs[radius * 2][3] = { { NULL } };
-        int nDstPitches[3] = { 0 };
-        int nSrcPitches[3] = { 0 };
-        int nRefPitches[radius * 2][3] = { { 0 } };
+        ptrdiff_t nDstPitches[3] = { 0 };
+        ptrdiff_t nSrcPitches[3] = { 0 };
+        ptrdiff_t nRefPitches[radius * 2][3] = { { 0 } };
         int isUsable[radius * 2];
         int nLogPel = (d->vectors_data[0].nPel == 4) ? 2 : (d->vectors_data[0].nPel == 2) ? 1 : 0;
 
@@ -185,7 +185,7 @@ static const VSFrame *VS_CC mvdegrainGetFrame(int n, int activationReason, void 
         int tmpBlockPitch = nBlkSizeX[0] * bytesPerSample;
         uint8_t *tmpBlock = NULL;
         if (nOverlapX[0] > 0 || nOverlapY[0] > 0) {
-            DstTemp = new uint8_t[dstTempPitch * nHeight[0]];
+            DstTemp = new uint8_t[dstTempPitch * nHeight_B[0]];
             tmpBlock = new uint8_t[tmpBlockPitch * nBlkSizeY[0]];
         }
 
@@ -219,7 +219,7 @@ static const VSFrame *VS_CC mvdegrainGetFrame(int n, int activationReason, void 
                         int i = by * nBlkX + bx;
 
                         const uint8_t *pointers[radius * 2]; // Moved by the degrain function.
-                        int strides[radius * 2];
+                        ptrdiff_t strides[radius * 2];
 
                         int WSrc, WRefs[radius * 2];
 
@@ -263,7 +263,7 @@ static const VSFrame *VS_CC mvdegrainGetFrame(int n, int activationReason, void 
                         int i = by * nBlkX + bx;
 
                         const uint8_t *pointers[radius * 2]; // Moved by the degrain function.
-                        int strides[radius * 2];
+                        ptrdiff_t strides[radius * 2];
 
                         int WSrc, WRefs[radius * 2];
 
@@ -286,6 +286,7 @@ static const VSFrame *VS_CC mvdegrainGetFrame(int n, int activationReason, void 
 
                 d->ToPixels(pDst[plane], nDstPitches[plane], DstTemp, dstTempPitch, nWidth_B[plane], nHeight_B[plane], bitsPerSample);
 
+                
                 if (nWidth_B[0] < nWidth[0])
                     vsh::bitblt(pDst[plane] + nWidth_B[plane] * bytesPerSample, nDstPitches[plane],
                               pSrc[plane] + nWidth_B[plane] * bytesPerSample, nSrcPitches[plane],
@@ -295,6 +296,7 @@ static const VSFrame *VS_CC mvdegrainGetFrame(int n, int activationReason, void 
                     vsh::bitblt(pDst[plane] + nDstPitches[plane] * nHeight_B[plane], nDstPitches[plane],
                               pSrc[plane] + nSrcPitches[plane] * nHeight_B[plane], nSrcPitches[plane],
                               nWidth[plane] * bytesPerSample, nHeight[plane] - nHeight_B[plane]);
+
             }
 
             int pixelMax = (1 << bitsPerSample) - 1;

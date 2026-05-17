@@ -102,8 +102,8 @@ static const VSFrame *VS_CC mvrecalculateGetFrame(int n, int activationReason, v
 
         const uint8_t *pSrc[3] = { NULL };
         const uint8_t *pRef[3] = { NULL };
-        int nSrcPitch[3] = { 0 };
-        int nRefPitch[3] = { 0 };
+        ptrdiff_t nSrcPitch[3] = { 0 };
+        ptrdiff_t nRefPitch[3] = { 0 };
 
         int nref;
         int offset = d->analysisData.nDeltaFrame;
@@ -419,7 +419,7 @@ static void VS_CC mvrecalculateCreate(const VSMap *in, VSMap *out, void *userDat
 #define ERROR_SIZE 1024
     char errorMsg[ERROR_SIZE] = "Recalculate: failed to retrieve first frame from super clip. Error message: ";
     size_t errorLen = strlen(errorMsg);
-    const VSFrame *evil = vsapi->getFrame(0, d.node, errorMsg + errorLen, ERROR_SIZE - errorLen);
+    const VSFrame *evil = vsapi->getFrame(0, d.node, errorMsg + errorLen, ERROR_SIZE - (int)errorLen);
 #undef ERROR_SIZE
     if (!evil) {
         vsapi->mapSetError(out, errorMsg);
@@ -521,7 +521,7 @@ static void VS_CC mvrecalculateCreate(const VSMap *in, VSMap *out, void *userDat
 
 
     int nBlkX = (d.analysisData.nWidth - d.analysisData.nOverlapX) / (d.analysisData.nBlkSizeX - d.analysisData.nOverlapX); //x
-    int nBlkY = (d.analysisData.nHeight - d.analysisData.nOverlapY) / (d.analysisData.nBlkSizeY - d.analysisData.nOverlapY);
+    int nBlkY = (d.analysisData.nHeight - d.analysisData.nOverlapY + (d.analysisData.nBlkSizeY - d.analysisData.nOverlapY - 1)) / (d.analysisData.nBlkSizeY - d.analysisData.nOverlapY);
 
     d.analysisData.nBlkX = nBlkX;
     d.analysisData.nBlkY = nBlkY;
